@@ -71,3 +71,39 @@ iam_setup.log
 ```
 This includes group creation, user creation, password assignment, and any skipped entries.
 
+---
+
+## 📬 Optional Email Notifications
+To send emails to new users:
+
+*1. Make sure mail is installed and configured:*
+```
+sudo apt install mailutils
+
+```
+
+*2. Edit the email variable in the script:*
+```
+ email="${username}@${EMAIL_DOMAIN}"
+
+```
+---
+
+## 🔒 Password Policy
+
+*The script enforces a minimum password complexity:*
+- At least 8 characters
+- At least 1 uppercase, 1 lowercase, and 1 digit
+
+The default password is: ChangeMe123
+```
+You can change it by modifying the DEFAULT_PASSWORD variable in the script.
+
+```
+
+
+
+
+
+
+
