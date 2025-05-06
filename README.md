@@ -74,21 +74,93 @@ This includes group creation, user creation, password assignment, and any skippe
 ---
 
 ## 📬 Optional Email Notifications
-To send emails to new users:
 
-*1. Make sure mail is installed and configured:*
+**email notification** system sends an email to each user after account creation. Emails are sent using a configured SMTP server (e.g., Gmail), ensuring delivery across platforms and environments.
+
+### How The Email Notifications Work
+Once a user is successfully created via the IAM automation script, an email is sent to notify them of their new account and temporary login details.
+
+### 🔁 Email Logic
+- If the script is configured with a valid SMTP setup (e.g., Gmail + Postfix), it sends emails using the `mail` command.
+- The email contains:
+  - A greeting
+  - Username and assigned group
+  - A prompt to change their temporary password on first login
+
+### Configuration
+#### 1. Configure Postfix for Gmail SMTP
+
+Ensure Postfix is installed and configured to use Gmail's SMTP.
+
+```bash
+sudo apt update
+sudo apt install postfix mailutils libsasl2-2 ca-certificates libsasl2-modules -y
 ```
-sudo apt install mailutils
+
+Edit /etc/postfix/main.cf:
+```
+relayhost = [smtp.gmail.com]:587
+smtp_use_tls = yes
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = noanonymous
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
 
 ```
 
-*2. Edit the email variable in the script:*
+Create /etc/postfix/sasl_passwd:
 ```
- email="${username}@${EMAIL_DOMAIN}"
+[smtp.gmail.com]:587 your.email@gmail.com:your_app_password
 
 ```
+Then run:
+```
+sudo postmap /etc/postfix/sasl_passwd
+sudo chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+sudo chmod 600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+sudo systemctl restart postfix
+
+```
+
+*Note on Gmail*
+- You must use an App Password — regular Gmail password will not work.
+- App Passwords are created in your Google Account > Security > App passwords.
+
+## Usage in Script
+The script sends email like this:
+
+```
+echo "Hello $fullname,
+
+Your user account ($username) has been created and added to group '$group'.
+
+Temporary password: ChangeMe123
+Please change it on first login."
+| mail -s "Account created" "$default_email"
+
+```
+*NB:* default_email can be customized in the script. Currently set to my email humaiduali@gmail.com for testing purposes 
+
 ---
 
+## Cross-Platform Considerations
+While the mail command works well on Unix-like systems with Postfix, for full cross-platform support (e.g., Windows, Docker, CI/CD):
+
+- Consider using a Python-based SMTP solution (see below).
+- Ensure internet access and allow port 587 outbound for Gmail.
+
+---
+
+## Python-based Fallback
+Create a *send_mail.py* file using *smtplib* and email modules to send email from anywhere.
+
+```
+# send_mail.py
+# Usage: python3 send_mail.py "user@example.com" "Subject" "Message"
+
+```
+
+---
 ## 🔒 Password Policy
 
 *The script enforces a minimum password complexity:*

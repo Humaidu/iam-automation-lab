@@ -3,7 +3,6 @@
 
 users_file="users.txt"
 log_file="iam_setup.log"
-first_line_skipped=false
 temporary_password="ChangeMe123"
 
 # Function to log messages with timestamps
@@ -11,6 +10,32 @@ log() {
     local message="$(date '+%Y-%m-%d %H:%M:%S') - $1"
     echo "$message" | tee -a "$log_file"
 }
+
+# Function to Send email notification
+send_notification() {
+    local fullname="$1"
+    local username="$2"
+    local temporary_password="$3"
+    local email="humaiduali@gmail.com"
+
+    email_body=$(cat <<EOF
+Hello $fullname,
+
+Your account '$username' has been created.
+Temporary password: $temporary_password
+Please change it upon first login.
+EOF
+)
+
+    if command -v mail &> /dev/null; then
+        echo "$email_body" | mail -s "Account Created" "$email"
+        log "Notification sent to $email"
+    else
+        log "mail command not available. Using send_mail.py."
+        python3 send_mail.py "$email" "Account Created" "$email_body"
+    fi
+}
+
 
 # Read the file line by line
 while IFS=',' read -r username fullname group; do
@@ -54,6 +79,10 @@ while IFS=',' read -r username fullname group; do
     # set user's home directory to be only accessible by that user
     chmod 700 /home/"$username"
     log "Permissions set to 700 for /home/$username"
+
+    # Send email notification
+    send_notification "$fullname" "$username" "$temporary_password"
+
 
 
 done < "$users_file"
