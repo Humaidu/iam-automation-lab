@@ -55,9 +55,10 @@ chmod +x iam_setup.sh
 ```
 *3. Run the Script*
 ```
-./iam_setup.sh 
+sudo ./iam_setup.sh 
 
 ```
+*NB:* The script must be run with sudo
 Make sure the script and users.txt are in the same directory.
 
 ---

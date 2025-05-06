@@ -1,7 +1,7 @@
 #!/bin/bash
 # Lab: Automating Identity and Access Management in Linux with Bash
 
-users_file="users.txt"
+
 log_file="iam_setup.log"
 temporary_password="ChangeMe123"
 
@@ -10,6 +10,60 @@ log() {
     local message="$(date '+%Y-%m-%d %H:%M:%S') - $1"
     echo "$message" | tee -a "$log_file"
 }
+
+# Check if the script is running as root (sudo)
+if [ "$(id -u)" -ne 0 ]; then
+    log "This script must be run with sudo. Exiting."
+    exit 1
+fi
+
+# Check if CSV file path was provided
+if [[ $# -ne 1 ]]; then
+    log "Usage: $0 users.txt"
+    exit 1
+fi
+
+users_file="$1"
+
+# Validate file exists
+if [[ ! -f "$users_file" ]]; then
+    log "Error: File '$users_file' not found."
+    exit 1
+fi
+
+# Function to check password complexity
+check_password_complexity() {
+    local password="$1"
+    local min_length=8
+
+    if [ ${#password} -lt $min_length ]; then
+        log "Password must be at least $min_length characters long."
+        return 1
+    fi
+
+    if ! [[ "$password" =~ [A-Z] ]]; then
+        log "Password must contain at least one uppercase letter."
+        return 1
+    fi
+
+    if ! [[ "$password" =~ [a-z] ]]; then
+        log "Password must contain at least one lowercase letter."
+        return 1
+    fi
+
+    if ! [[ "$password" =~ [0-9] ]]; then
+        log "Password must contain at least one number."
+        return 1
+    fi
+
+    if ! [[ "$password" =~ [[:punct:]] ]]; then
+        log "Password must contain at least one special character."
+        return 1
+    fi
+
+    return 0
+}
+
 
 # Function to Send email notification
 send_notification() {
@@ -26,13 +80,17 @@ Temporary password: $temporary_password
 Please change it upon first login.
 EOF
 )
-
+   
     if command -v mail &> /dev/null; then
         echo "$email_body" | mail -s "Account Created" "$email"
         log "Notification sent to $email"
     else
         log "mail command not available. Using send_mail.py."
+        source env/bin/activate
+        export $(grep -v '^#' .env | xargs)
         python3 send_mail.py "$email" "Account Created" "$email_body"
+        log "Notification sent to $email"
+
     fi
 }
 
@@ -69,7 +127,7 @@ while IFS=',' read -r username fullname group; do
     if [ $? -eq 0 ]; then
         log "Temporary password set for user '$username'."
     else
-        log "❌ Failed to set password for user '$username'."
+        log "Failed to set password for user '$username'."
     fi
 
     # Force user to change password on first login
@@ -82,8 +140,7 @@ while IFS=',' read -r username fullname group; do
 
     # Send email notification
     send_notification "$fullname" "$username" "$temporary_password"
-
-
+    log ""
 
 done < "$users_file"
 
