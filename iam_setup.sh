@@ -14,11 +14,11 @@ log() {
 
 # Read the file line by line
 while IFS=',' read -r username fullname group; do
-    # Skip the header row
-    if [ "$first_line_skipped" = false ]; then
-        first_line_skipped=true
-        continue
-    fi
+    # Skip the header row and empty lines
+    [[ -z "$username" || "$username" == "username" ]] && continue
+
+    log ""
+    log "Processing user: $username"
 
     # Create group if it doesn't exist
     if ! getent group "$group" > /dev/null; then
@@ -37,10 +37,15 @@ while IFS=',' read -r username fullname group; do
     # Create user with home directory, group, and full name
     useradd -m -g "$group" -c "$fullname" "$username"
     log "User '$username' created and added to group '$group'."
+    log ""
     
     # Set a temporary password
     echo "$username:$temporary_password" | chpasswd
-    log "Temporary password set for user '$username'."
+    if [ $? -eq 0 ]; then
+        log "Temporary password set for user '$username'."
+    else
+        log "❌ Failed to set password for user '$username'."
+    fi
 
     # Force user to change password on first login
     chage -d 0 "$username"
@@ -52,4 +57,7 @@ while IFS=',' read -r username fullname group; do
 
 
 done < "$users_file"
+
+log ""
+log "IAM setup completed."
 
