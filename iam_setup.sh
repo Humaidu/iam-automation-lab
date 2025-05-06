@@ -3,7 +3,7 @@
 
 
 log_file="iam_setup.log"
-temporary_password="ChangeMe123"
+temporary_password="ChangeMe@123"
 
 # Function to log messages with timestamps
 log() {
@@ -30,40 +30,6 @@ if [[ ! -f "$users_file" ]]; then
     log "Error: File '$users_file' not found."
     exit 1
 fi
-
-# Function to check password complexity
-check_password_complexity() {
-    local password="$1"
-    local min_length=8
-
-    if [ ${#password} -lt $min_length ]; then
-        log "Password must be at least $min_length characters long."
-        return 1
-    fi
-
-    if ! [[ "$password" =~ [A-Z] ]]; then
-        log "Password must contain at least one uppercase letter."
-        return 1
-    fi
-
-    if ! [[ "$password" =~ [a-z] ]]; then
-        log "Password must contain at least one lowercase letter."
-        return 1
-    fi
-
-    if ! [[ "$password" =~ [0-9] ]]; then
-        log "Password must contain at least one number."
-        return 1
-    fi
-
-    if ! [[ "$password" =~ [[:punct:]] ]]; then
-        log "Password must contain at least one special character."
-        return 1
-    fi
-
-    return 0
-}
-
 
 # Function to Send email notification
 send_notification() {

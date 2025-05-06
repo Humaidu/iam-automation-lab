@@ -4,7 +4,7 @@ This repository contains a Bash script (`iam_setup.sh`) that automates user and 
 
 ---
 
-## 🚀 Features
+## Features
 
 - ✅ Create Linux groups if they don’t exist
 - ✅ Create user accounts with full name, group, home directory
@@ -17,7 +17,7 @@ This repository contains a Bash script (`iam_setup.sh`) that automates user and 
 
 ---
 
-## 📁 Sample CSV File (`users.txt`)
+## Sample CSV File (`users.txt`)
 
 ```csv
 username,fullname,group
@@ -26,12 +26,14 @@ asmith,Alice Smith,engineering
 mjones,Mike Jones,design
 
 ```
----
 
-## 🛠️ Prerequisites
+---
+## Prerequisites
 - A Linux machine (physical, VM, or WSL)
 - Basic knowledge of Bash scripting
 - Familiarity with `useradd`, `usermod`, `passwd`, and `chage`
+- Run the script with sudo
+- For Gmail notifications, use an App Password
 
 ---
 
@@ -40,7 +42,7 @@ You are a system administrator for a mid-sized company. A new department require
 
 ---
 
-## ⚙️ Usage
+## Usage
 *1. Clone the Repository*
 ```
 git clone https://github.com/yourusername/iam-automation.git
@@ -55,7 +57,7 @@ chmod +x iam_setup.sh
 ```
 *3. Run the Script*
 ```
-sudo ./iam_setup.sh 
+sudo ./iam_setup.sh users.txt
 
 ```
 *NB:* The script must be run with sudo
@@ -63,7 +65,7 @@ Make sure the script and users.txt are in the same directory.
 
 ---
 
-## 📝 Logging
+## Logging
 
 *All actions are logged to:*
 ```
@@ -74,7 +76,7 @@ This includes group creation, user creation, password assignment, and any skippe
 
 ---
 
-## 📬 Optional Email Notifications
+## Optional Email Notifications
 
 **email notification** system sends an email to each user after account creation. Emails are sent using a configured SMTP server (e.g., Gmail), ensuring delivery across platforms and environments.
 
@@ -162,20 +164,59 @@ Create a *send_mail.py* file using *smtplib* and email modules to send email fro
 ```
 
 ---
-## 🔒 Password Policy
 
-*The script enforces a minimum password complexity:*
-- At least 8 characters
-- At least 1 uppercase, 1 lowercase, and 1 digit
+## Password Complexity Enforcement
 
-The default password is: ChangeMe123
+This project uses **PAM (Pluggable Authentication Modules)** to enforce secure password creation policies. Specifically, it leverages the `pam_pwquality.so` module, which checks passwords against defined complexity rules.
+
+### Enforced Complexity Rules
+
+These rules are defined in `/etc/pam.d/common-password`:
+
+```bash
+password requisite pam_pwquality.so retry=3 minlen=8 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1
+
 ```
-You can change it by modifying the DEFAULT_PASSWORD variable in the script.
+This means:
+
+- Minimum password length: 8 characters
+- At least one uppercase letter (ucredit=-1)
+- At least one lowercase letter (lcredit=-1)
+- At least one digit (dcredit=-1)
+- At least one special character (ocredit=-1)
+- Up to 3 retries are allowed before the password change fails
+
+### Temporary Password Requirements
+
+When creating users, a temporary password is set and users are required to change it on their first login. Ensure this password meets the complexity policy above.
+
+*Example (Valid) Temporary Password:*
+```
+ChangeMe@123
 
 ```
+### How It Works
 
+- User accounts are created with a default password (ChangeMe@123).
+- The PAM system enforces complexity at the time of password setting or user login.
+- If the password doesn't meet the policy, the script will fail to set it.
+- Users are forced to change their password on first login with *chage -d 0*.
 
+### Testing Password Complexity
+To test the policy manually:
+```
+sudo su - <username>
 
+```
+Try entering a weak password to confirm rejection.
+
+---
+## Files
+
+- iam_setup.sh - Main automation script
+- send_mail.py - Python fallback for sending emails
+- .env - Contains Gmail credentials (when using SMTP fallback)
+- users.txt - CSV input file containing username,fullname,group
 
 
 
