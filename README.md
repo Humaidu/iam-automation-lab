@@ -65,6 +65,14 @@ Make sure the script and users.txt are in the same directory.
 
 ---
 
+## .env file
+
+Create a .env file to include:
+- Google app password as APP_PASSWORD
+- User email address as USER_EMAIL
+
+---
+
 ## Logging
 
 *All actions are logged to:*
@@ -217,7 +225,4 @@ Try entering a weak password to confirm rejection.
 - send_mail.py - Python fallback for sending emails
 - .env - Contains Gmail credentials (when using SMTP fallback)
 - users.txt - CSV input file containing username,fullname,group
-
-
-
 
