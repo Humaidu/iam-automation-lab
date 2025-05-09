@@ -1,6 +1,8 @@
 #!/bin/bash
 # Lab: Automating Identity and Access Management in Linux with Bash
 
+#source the .env file
+source .env
 
 log_file="iam_setup.log"
 temporary_password="ChangeMe@123"
@@ -36,7 +38,7 @@ send_notification() {
     local fullname="$1"
     local username="$2"
     local temporary_password="$3"
-    local email="humaiduali@gmail.com"
+    local email="$USER_EMAIL"
 
     email_body=$(cat <<EOF
 Hello $fullname,

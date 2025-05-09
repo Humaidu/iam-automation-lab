@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 def send_email(to_email, subject, body):
     from_email =os.getenv("email")
-    password = os.getenv("app_password")
+    password = os.getenv("APP_PASSWORD")
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = from_email
